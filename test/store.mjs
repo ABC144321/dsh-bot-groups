@@ -159,6 +159,8 @@ await check('工具注册（假 ctx）', () => {
     'bot_group_list', 'bot_group_create', 'bot_group_show', 'bot_group_chat',
     'bot_group_round', 'bot_group_speak', 'bot_group_invite', 'bot_group_remove_members',
     'bot_group_goal', 'bot_group_mode', 'bot_group_delete',
+    'bot_group_stop', 'bot_group_retry', 'bot_group_task', 'bot_group_budget',
+    'bot_group_model', 'bot_providers',
   ]
   return expected.every((n) => names.includes(n)) && names.length === expected.length
 })

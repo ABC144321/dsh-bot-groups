@@ -192,9 +192,12 @@ await check('apply() 不抛错', () => {
 })
 
 const slotNames = registrations.filter((r) => r.options).map((r) => r.options.name)
-await check('注册了 main / dock / settings / sidebar 四个插槽', () => {
-  const want = ['main', 'conversation.input.dock', 'settings.section', 'sidebar.panellist']
-  for (const name of want) if (!slotNames.includes(name)) throw new Error(`缺少 ${name}：${slotNames.join(',')}`)
+await check('注册了 main / dock / settings ×2 / sidebar', () => {
+  const count = (name) => slotNames.filter((item) => item === name).length
+  if (count('main') !== 1) throw new Error(`main=${count('main')}`)
+  if (count('conversation.input.dock') !== 1) throw new Error(`dock=${count('conversation.input.dock')}`)
+  if (count('settings.section') !== 2) throw new Error(`settings=${count('settings.section')}`)
+  if (count('sidebar.panellist') !== 1) throw new Error(`sidebar=${count('sidebar.panellist')}`)
   return true
 })
 await check('main 使用 keyed key=bot-groups', () => {
@@ -204,10 +207,13 @@ await check('main 使用 keyed key=bot-groups', () => {
 })
 await check('dock / settings / sidebar 的 id 与 order', () => {
   const dock = registrations.find((r) => r.options && r.options.name === 'conversation.input.dock').options
-  const settings = registrations.find((r) => r.options && r.options.name === 'settings.section').options
+  const settingsRows = registrations.filter((r) => r.options && r.options.name === 'settings.section').map((r) => r.options)
+  const settings = settingsRows.find((row) => row.id === 'bot-groups')
+  const providers = settingsRows.find((row) => row.id === 'bot-providers')
   const sidebar = registrations.find((r) => r.options && r.options.name === 'sidebar.panellist').options
   if (dock.id !== 'bot-groups' || dock.order !== 21) throw new Error(JSON.stringify(dock))
-  if (settings.id !== 'bot-groups' || settings.order !== 610 || settings.label() !== 'Bot 群') throw new Error(JSON.stringify(settings))
+  if (!settings || settings.order !== 610 || settings.label() !== 'Bot 群') throw new Error(JSON.stringify(settings))
+  if (!providers || providers.order !== 611 || providers.label() !== '模型服务商') throw new Error(JSON.stringify(providers))
   if (sidebar.id !== 'bot-groups' || sidebar.order !== 41 || sidebar.label() !== 'Bot 群') throw new Error(JSON.stringify(sidebar))
   return true
 })
@@ -225,6 +231,12 @@ await check('SettingsCard 渲染出运行时说明', () => {
   const text = textOf(createElement(C.SettingsCard, { ctx: fakeCtx }))
   if (!text.includes('Bot 群')) throw new Error(text)
   if (!text.includes('打开 Bot 群面板')) throw new Error(text)
+  return true
+})
+await check('ProvidersCard 渲染出服务商标题与自定义入口', () => {
+  const text = textOf(createElement(C.ProvidersCard, { ctx: fakeCtx }))
+  if (!text.includes('模型服务商')) throw new Error(text)
+  if (!text.includes('自定义服务商')) throw new Error(text)
   return true
 })
 await check('Shell 在无数据时渲染空状态', () => {

@@ -1,8 +1,8 @@
 # dsh-bot-groups · Bot 群
 
-> 给 DSH Bot 加一个群聊层，并在「模式」里加入 **Bot 模式** —— 像 Grok Bot 一样，Bot 之间可以互相拉群、@ 交接、圆桌讨论、共享群目标。
+> 给 DSH Bot 加一个群聊层，并在「模式」里加入 **Bot 模式** —— 像 Grok Bot 一样，Bot 之间可以互相拉群、@ 交接、圆桌讨论、共享群目标与任务看板；同时支持**第三方模型 API**（主流服务商 / 魔搭社区 ModelScope / 任意 OpenAI 兼容端点）。
 
-MIT License · 无运行时依赖（除了 `@zifeng1023/dsh-bot`）· 离线自测 63 项
+MIT License · 无运行时依赖（除了 `@zifeng1023/dsh-bot`）· 离线自测 90 项
 
 ## 它做了什么
 
@@ -16,12 +16,43 @@ MIT License · 无运行时依赖（除了 `@zifeng1023/dsh-bot`）· 离线自�
 - 路由模式：智能 @ 路由 / 依次发言 / 全员圆桌 / 主持人主导。
 - @ 交接：Bot 回复里 `@成员名` 会自动触发下一位发言（有轮次上限，避免无限接力）。
 - 群目标：一句话目标会注入每次群发言的上下文，可标记进行中 / 暂停 / 已完成。
-- 花费可见：每条 Bot 发言带本次花费，群头部统计累计花费与消息数。
+- 任务看板：群里可以维护待办 / 进行中 / 已完成的任务，Bot 发言时能看到未完成项。
+- 引用与附件：可以引用某条消息回复，也可以把本机文件挂到消息上（Bot 用文件工具读取）。
+- 停止与重试：一轮跑到一半可以「停止」，失败或被停下的发言可以「重试」。
+- 花费可见：每条 Bot 发言带本次花费，群头部统计累计花费、消息数与每日预算用量。
 - 私聊：`kind: dm` 就是和单个 Bot 的 1 对 1 会话。
 
 **3. 输入框快捷条**
 
 输入框下方常驻一条 `Bot 群` 快捷条：一眼看到未读与「进行中」，点一下就切到对应的群。
+
+**4. 第三方模型 API（设置 →「模型服务商」）**
+
+Grok Bot 的 Bot 可以换脑子，这里也可以：给任意 Bot、或整个群，换到第三方模型端点。
+
+内置 12 家预置，点「配置」填 Key 即可：
+
+| 预置 | 协议 | Base URL | 备注 |
+| --- | --- | --- | --- |
+| DeepSeek | openai | `https://api.deepseek.com/v1` | 官方 |
+| **魔搭社区 ModelScope** | openai | `https://api-inference.modelscope.cn/v1` | 模型名带组织前缀，如 `Qwen/Qwen3-235B-A22B-Instruct-2507`、`deepseek-ai/DeepSeek-V3.2` |
+| OpenAI | openai | `https://api.openai.com/v1` | |
+| Anthropic | anthropic | `https://api.anthropic.com/v1` | 原生协议 |
+| Gemini | gemini | `https://generativelanguage.googleapis.com/v1beta` | 原生协议 |
+| 通义千问（百炼） | openai | `https://dashscope.aliyuncs.com/compatible-mode/v1` | |
+| Kimi（月之暗面） | openai | `https://api.moonshot.cn/v1` | |
+| 智谱 GLM | openai | `https://open.bigmodel.cn/api/paas/v4` | |
+| 火山方舟（豆包） | openai | `https://ark.cn-beijing.volces.com/api/v3` | 模型填 endpoint id |
+| SiliconFlow | openai | `https://api.siliconflow.cn/v1` | |
+| OpenRouter | openai | `https://openrouter.ai/api/v1` | |
+| Ollama（本地） | openai | `http://127.0.0.1:11434/v1` | 无需 Key |
+
+也可以「+ 自定义服务商」：任意 OpenAI 兼容端点（自建网关、one-api / new-api、vLLM、LM Studio…），填 ID、Base URL、模型清单即可。
+
+- Key 只存在本机 `~/.dsh/bot/providers.json`，接口只回 `hasKey / keySource`，不下发明文；支持 `env:变量名` 与 `file:/绝对路径` 引用。
+- 「测试」会先打 `GET /models` 验证 Key 与连通性，再报告可用模型与延迟。
+- 生效范围：在 Bot 面板把某个 Bot 的模型切到这家服务商；或在群的「模型与预算」里把整个群临时切过去（`跟随 Bot` 则用 Bot 自己的模型）。
+- 第三方通道费用无法从响应里推算，会记为 `costKind: unknown`（花费显示 ¥0），宿主自带的 DeepSeek 通道仍按原价计费。
 
 ## 依赖
 
@@ -39,28 +70,29 @@ plugin_manager action=install_bundle target="<克隆下来的目录绝对路径>
 plugin_manager action=install_bundle target="<本目录绝对路径>"
 ```
 
-装好后：侧边栏出现「Bot 群」图标，新建会话的模式里出现「Bot 模式」，输入框上方出现快捷条，设置里出现「Bot 群」分区。
+装好后：侧边栏出现「Bot 群」图标，新建会话的模式里出现「Bot 模式」，输入框上方出现快捷条，设置里出现「Bot 群」与「模型服务商」两个分区。
 
-改了宿主代码（`lib/index.js`、`lib/store.js`、`lib/tools.js`）后不会热更新，需要在插件管理器里重启这一行：
+改了宿主代码（`lib/index.js`、`lib/store.js`、`lib/tools.js`、`lib/providers.js`）后不会热更新，需要在插件管理器里重启这一行：
 
 ```
 plugin_manager action=set_plugin target="include:dsh-bot-groups" enabled=false
 plugin_manager action=set_plugin target="include:dsh-bot-groups" enabled=true
 ```
 
-只改 `lib/client.js` 时不用重启宿主，客户端 HMR 会重新发布 bundle 并重挂插槽（侧边栏图标就是这么生效的）。
+只改 `lib/client.js` 时不用重启宿主，客户端 HMR 会重新发布 bundle 并重挂插槽。
 
 ## 数据在哪
 
 ```
-~/.dsh/bot/groups/<groupId>.json   # 每个群一个文件：成员、消息、轮次、目标
+~/.dsh/bot/groups/<groupId>.json   # 每个群一个文件：成员、消息、轮次、目标、任务、预算
+~/.dsh/bot/providers.json          # 第三方模型服务商配置（含 Key，仅本机）
 ~/.dsh/bot/bots/<botId>/...        # Bot 身份（由 dsh-bot 管理，本插件只读）
 ~/.dsh/bot/runs/YYYY/MM/*.json     # Bot 运行记录（由 dsh-bot 写入）
 ```
 
 ## 工具
 
-`bot_group_list`、`bot_group_create`、`bot_group_show`、`bot_group_chat`、`bot_group_round`、`bot_group_speak`、`bot_group_invite`、`bot_group_remove_members`、`bot_group_goal`、`bot_group_mode`、`bot_group_delete`。
+`bot_group_list`、`bot_group_create`、`bot_group_show`、`bot_group_chat`、`bot_group_round`、`bot_group_speak`、`bot_group_invite`、`bot_group_remove_members`、`bot_group_goal`、`bot_group_mode`、`bot_group_delete`、`bot_group_stop`、`bot_group_retry`、`bot_group_task`、`bot_group_budget`、`bot_group_model`、`bot_providers`。
 
 ## HTTP API
 
@@ -70,6 +102,13 @@ plugin_manager action=set_plugin target="include:dsh-bot-groups" enabled=true
 GET    /_dsh-bot-groups/overview
 GET    /_dsh-bot-groups/diag
 GET    /_dsh-bot-groups/bots
+POST   /_dsh-bot-groups/bots/:id/model
+GET    /_dsh-bot-groups/providers
+POST   /_dsh-bot-groups/providers
+DELETE /_dsh-bot-groups/providers/:id
+GET    /_dsh-bot-groups/providers/:id/models
+POST   /_dsh-bot-groups/providers/:id/test
+POST   /_dsh-bot-groups/providers/:id/enable
 POST   /_dsh-bot-groups/groups
 GET    /_dsh-bot-groups/groups/:id
 DELETE /_dsh-bot-groups/groups/:id
@@ -79,18 +118,29 @@ POST   /_dsh-bot-groups/groups/:id/speak
 POST   /_dsh-bot-groups/groups/:id/invite
 POST   /_dsh-bot-groups/groups/:id/remove-members
 POST   /_dsh-bot-groups/groups/:id/update
+POST   /_dsh-bot-groups/groups/:id/stop
+POST   /_dsh-bot-groups/groups/:id/retry
+POST   /_dsh-bot-groups/groups/:id/tasks
+POST   /_dsh-bot-groups/groups/:id/tasks/:taskId
+POST   /_dsh-bot-groups/groups/:id/budget
+POST   /_dsh-bot-groups/groups/:id/model
 ```
 
 ## 配置（cordis.patch.yml 的 `dsh-bot-groups` 行）
 
 | 键 | 默认 | 说明 |
 | --- | --- | --- |
-| `homeDir` | `~/.dsh/bot` | Bot 与群数据根目录 |
+| `homeDir` | `~/.dsh/bot` | Bot 与群数据根目录（`providers.json` 也在这里） |
 | `replyDryRun` | `false` | 群内自动回复默认是否演练 |
 | `handoffEnabled` | `true` | 是否允许回复里的 @ 触发下一位 |
 | `maxBotsPerRound` | `6` | 一轮最多几位成员真的跑模型 |
 | `runTimeoutMs` | `240000` | 单次发言超时 |
 | `snapshotEnabled` | `false` | 群发言前是否给 Bot workspace 打快照 |
+| `defaultProvider` | `deepseek` | 没有显式模型时的兜底服务商 |
+| `defaultModel` | `deepseek-flash` | 兜底模型 |
+| `defaultReasoningEffort` | `high` | 兜底推理强度 |
+| `defaultDailyCny` | `5` | 新群的默认每日预算（0 表示不限） |
+| `defaultMonthlyCny` | `100` | 新群的默认每月预算 |
 
 ## 已知边界
 
@@ -98,14 +148,15 @@ POST   /_dsh-bot-groups/groups/:id/update
 - 一轮接力有硬上限（`maxRounds` 与 `maxBotsPerRound` 取小），防止 Bot 之间无限对聊烧预算。一条人类消息最多触发 `maxBotsPerRound` 次真实模型运行，按需调小。
 - 当前不监听 Host 推送，面板用轮询（运行中 2s，空闲 9s）。
 - 本插件会自己构造一份 `BotService` + `RoutineRunner`（复用 dsh-bot 的 `~/.dsh/bot` 数据与模型），与 dsh-bot 自带的实例各自持锁；群内发言按群串行，不会和别群并发。
+- 第三方通道的 token 用量按服务商返回的 usage 归一化；不同服务商字段差异较大，个别情况可能缺省为 0。
 
 ## 自测
 
-不依赖 DSH 也能跑的三组（CI 每次提交都跑）：
+不依赖 DSH 也能跑的四组（CI 每次提交都跑）：
 
 ```powershell
 npm run check     # 语法检查
-npm test          # 数据层 23 项 + 服务与路由 22 项 + 客户端 bundle 18 项
+npm test          # 数据层 23 项 + 服务与路由 22 项 + 客户端 bundle 19 项 + 服务商 26 项
 ```
 
 需要真实 DSH 安装目录的两组（校验 Bot 模式引用的 26 个插件包与它们各自的 config）：
@@ -115,7 +166,12 @@ $env:DSH_INSTALL_DIR='<...>/resources/app.asar/dsh/node_modules/@deepseek-ai/dsh
 npm run test:preset
 ```
 
-线上（安装后）已验证：`GET /_dsh-bot-groups/overview` 返回 200、`/diag` 显示 `degraded: false`、11 个 `bot_group_*` 工具出现在会话工具表、客户端插槽 `conversation.input.dock` / `sidebar.panellist` 中 `dsh-bot-groups-client` 均为 active、`include:preset-bot` 为 active、两个 Bot 的群聊实测完成「建群 → 点名 → 接力 → 回传」并落档计费。
+线上（安装后）已验证：`GET /_dsh-bot-groups/overview` 返回 200、`/diag` 显示 `degraded: false`、17 个 `bot_group_*` / `bot_providers` 工具出现在会话工具表、客户端插槽 `conversation.input.dock` / `sidebar.panellist` / 两个 `settings.section` 中 `dsh-bot-groups-client` 均为 active、`include:preset-bot` 为 active、两个 Bot 的群聊实测完成「建群 → 点名 → 接力 → 回传」并落档计费。
+
+## 更新日志
+
+- **0.1.1**：第三方模型 API（12 家预置 + 魔搭社区 + 自定义 OpenAI 兼容端点、`env:`/`file:` Key 引用、连通性测试、按 Bot / 按群切换）；停止与重试；群任务看板；每日/每月预算；引用回复与附件；6 个新工具与 13 个新端点。
+- **0.1.0**：Bot 模式、Bot 群（拉群 / 路由模式 / @ 交接 / 群目标 / 私聊）、输入框快捷条、侧边栏与设置分区。
 
 ## 许可证
 

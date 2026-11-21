@@ -77,7 +77,7 @@ const fakeRunner = {
 }
 
 await check('apply() 注册前缀路由', () => routes.length === 1 && routes[0].kind === 'prefix' && routes[0].path === '/_dsh-bot-groups')
-await check('apply() 注册 11 个工具', () => toolNames.length === 11)
+await check('apply() 注册 17 个工具', () => toolNames.length === 17)
 await check('ctx.set("botGroups") 生效', () => service && typeof service.create === 'function')
 
 // 注入假 Bot 身份与运行时
