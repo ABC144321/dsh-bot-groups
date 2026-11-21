@@ -1,9 +1,13 @@
 {
   "meta": {
     "title": "Bot Groups",
-    "description": "A group-chat layer for DSH Bots: pull bots into a group, hand off with @mentions, run round-tables, keep a shared goal, plus a Bot mode in the mode picker."
+    "description": "A group-chat layer for DSH Bots: pull bots into a group, hand off with @mentions, run round-tables, keep a shared goal and a task board, plus a Bot mode in the mode picker. Supports third-party model APIs (mainstream providers / ModelScope / custom endpoints)."
   },
   "panel": {
     "title": "Bot Groups"
+  },
+  "settings": {
+    "groupTitle": "Bot Groups",
+    "providersTitle": "Model providers"
   }
 }
