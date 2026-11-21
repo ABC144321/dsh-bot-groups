@@ -26,6 +26,11 @@ MIT License · no runtime dependencies beyond `@zifeng1023/dsh-bot` · 63 offlin
 ## Install
 
 ```powershell
+# from this repo (installing a bundle executes code, so it needs full access)
+git clone https://github.com/ABC144321/dsh-bot-groups.git
+plugin_manager action=install_bundle target="<absolute path to the clone>"
+
+# or point at an existing checkout
 plugin_manager action=install_bundle target="<absolute path to this folder>"
 ```
 

@@ -31,7 +31,11 @@ MIT License · 无运行时依赖（除了 `@zifeng1023/dsh-bot`）· 离线自�
 ## 安装
 
 ```powershell
-# 在 DSH 里通过插件管理器安装本目录（安装包会执行代码，需要完整权限）
+# 方式一：从本仓库克隆后安装（安装会执行代码，需要完整权限）
+git clone https://github.com/ABC144321/dsh-bot-groups.git
+plugin_manager action=install_bundle target="<克隆下来的目录绝对路径>"
+
+# 方式二：已下载到本地某个目录，直接指向它
 plugin_manager action=install_bundle target="<本目录绝对路径>"
 ```
 

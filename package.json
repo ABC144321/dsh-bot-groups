@@ -50,5 +50,13 @@
     "group-chat",
     "multi-agent"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ABC144321/dsh-bot-groups.git"
+  },
+  "homepage": "https://github.com/ABC144321/dsh-bot-groups#readme",
+  "bugs": {
+    "url": "https://github.com/ABC144321/dsh-bot-groups/issues"
+  },
   "license": "MIT"
 }
