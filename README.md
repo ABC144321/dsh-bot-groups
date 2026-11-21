@@ -1,8 +1,20 @@
-# dsh-bot-groups · Bot Groups
+# dsh-grok-bot · Grok Bot, supercharged
 
 > A group-chat layer for DSH Bots, plus a new **Bot mode** in the mode picker — Grok-Bot style: bots pull each other into groups, hand off with @mentions, run round-tables, share a group goal and a task board. Also ships **third-party model APIs** (mainstream providers / ModelScope / any OpenAI-compatible endpoint).
 
-MIT License · no runtime dependencies beyond `@zifeng1023/dsh-bot` · 90 offline checks
+MIT License · no runtime dependencies beyond `@zifeng1023/dsh-bot` · 100+ offline checks
+
+## v0.2.0 highlights
+
+- **Fixed "Bot unavailable in real sessions"**: reuse the host's `ctx.get('bot')` first; module loading now also searches `DSH_BOT_DIR`, `~/.dsh/{plugins,extensions,node_modules}`, every profile, `process.resourcesPath`, and `require.resolve` — no longer only `~/.dsh/profiles/*`.
+- **Fixed "Bot cannot write files"**: each turn's prompt now carries the Bot's **absolute workspace path** (and the directory is created), so relative paths no longer land in the session cwd or get rejected by the sandbox.
+- **Monthly group budget actually works**: tracks `spentDay` and `spentMonth`, and stops the round before the next model call when either limit is hit.
+- **Stop really stops the whole round** (no next speaker, status stays `stopped`).
+- `dryRun` on `bot_group_chat` now takes effect; mention parsing is unified on the word-boundary `parseMentions`.
+- **Performance**: in-memory group cache, concurrent `list()`, stats computed once, no `homeDir` persisted per group; polling pauses on hidden tabs and idle interval is 15s.
+- **Security**: writes require `x-dsh-grok-bot: 1` (CSRF guard); `providers.json` writes are serialized.
+- **Structure**: `lib/index.js` split into `config / errors / http / runtime / service / routes`.
+- Package/module id is now `dsh-grok-bot`; the `/_dsh-bot-groups` API prefix and `~/.dsh/bot` data directory are unchanged for compatibility.
 
 ## What you get
 
@@ -68,11 +80,11 @@ plugin_manager action=install_bundle target="<absolute path to this folder>"
 
 After install: a **Bot Groups** icon in the sidebar, a **Bot mode** card in the new-session mode picker, a quick bar above the composer, and **Bot Groups** + **Model providers** sections in Settings.
 
-Host-side edits (`lib/index.js`, `lib/store.js`, `lib/tools.js`, `lib/providers.js`) do not hot-reload; restart the row:
+Host-side edits (`lib/index.js`, `lib/service.js`, `lib/runtime.js`, `lib/store.js`, `lib/tools.js`, `lib/providers.js`) do not hot-reload; restart the row:
 
 ```
-plugin_manager action=set_plugin target="include:dsh-bot-groups" enabled=false
-plugin_manager action=set_plugin target="include:dsh-bot-groups" enabled=true
+plugin_manager action=set_plugin target="include:dsh-grok-bot" enabled=false
+plugin_manager action=set_plugin target="include:dsh-grok-bot" enabled=true
 ```
 
 `lib/client.js` alone reloads through client HMR (the sidebar icon is proof).
@@ -124,7 +136,7 @@ POST   /_dsh-bot-groups/groups/:id/budget
 POST   /_dsh-bot-groups/groups/:id/model
 ```
 
-## Config (the `dsh-bot-groups` row in `cordis.patch.yml`)
+## Config (the `dsh-grok-bot` row in `cordis.patch.yml`)
 
 | Key | Default | Meaning |
 | --- | --- | --- |

@@ -1,8 +1,20 @@
-# dsh-bot-groups · Bot 群
+# dsh-grok-bot · Grok Bot 超级优化版
 
 > 给 DSH Bot 加一个群聊层，并在「模式」里加入 **Bot 模式** —— 像 Grok Bot 一样，Bot 之间可以互相拉群、@ 交接、圆桌讨论、共享群目标与任务看板；同时支持**第三方模型 API**（主流服务商 / 魔搭社区 ModelScope / 任意 OpenAI 兼容端点）。
 
-MIT License · 无运行时依赖（除了 `@zifeng1023/dsh-bot`）· 离线自测 90 项
+MIT License · 无运行时依赖（除了 `@zifeng1023/dsh-bot`）· 离线自测 100+ 项
+
+## v0.2.0 更新（重要）
+
+- **修复「实际会话里 Bot 不可用」**：优先复用宿主已注册的 `ctx.get('bot')`；动态加载模块时扩展到 `DSH_BOT_DIR`、`~/.dsh/{plugins,extensions,node_modules}`、所有 profile、`process.resourcesPath` 与 `require.resolve`，不再只认 `~/.dsh/profiles/*`。
+- **修复「Bot 写不了文件」**：每次发言的 prompt 里注入该 Bot 的 workspace **绝对路径**，并自动创建目录；模型不会再因为相对路径落到会话 cwd 或被沙箱拒绝。
+- **群级月预算真正生效**：同时累计 `spentDay / spentMonth`，日/月任一超限即在本轮开始前熔断（不再只累计日额度）。
+- **「停止」真正停住整轮**：停止后不会继续下一位成员，轮次状态保持 `stopped`，不会被结尾的 `done` 覆盖。
+- **`bot_group_chat` 的 `dryRun` 真正生效**；`@` 解析统一走带词边界的 `parseMentions`（`@Bot2` 不会再误命中 `Bot`）。
+- **性能**：群数据内存缓存、`list()` 并发读取、stats 只算一次、不再把 `homeDir` 写进每个群 JSON；面板后台标签页停止轮询，空闲轮询 9s → 15s。
+- **安全**：写操作必须带 `x-dsh-grok-bot: 1` 头（挡 CSRF）；`providers.json` 写入串行化，避免并发覆盖。
+- **结构**：`lib/index.js` 拆分为 `config / errors / http / runtime / service / routes`，入口只负责装配。
+- 包名与模块 id 改为 `dsh-grok-bot`；API 前缀 `/_dsh-bot-groups` 与数据目录 `~/.dsh/bot` 保持不变，旧数据可直接沿用。
 
 ## 它做了什么
 
@@ -21,7 +33,7 @@ MIT License · 无运行时依赖（除了 `@zifeng1023/dsh-bot`）· 离线自�
 - 任务看板：群里可以维护待办 / 进行中 / 已完成的任务，Bot 发言时能看到未完成项。
 - 引用与附件：可以引用某条消息回复，也可以把本机文件挂到消息上（Bot 用文件工具读取）。
 - 停止与重试：一轮跑到一半可以「停止」，失败或被停下的发言可以「重试」。
-- 花费可见：每条 Bot 发言带本次花费；右栏有「本群用量」按 Bot 拆分的消息数与花费，以及累计花费、每日预算用量。
+- 花费可见：每条 Bot 发言带本次花费；右栏有「本群用量」按 Bot 拆分的消息数与花费，以及累计花费、每日/每月预算用量。
 - 搜索与导出：群头部可以搜消息（本地过滤，显示匹配数），也可以一键导出整段对话为 Markdown（含目标、备忘录、任务看板）。
 
 **3. 输入框快捷条**
@@ -74,11 +86,11 @@ plugin_manager action=install_bundle target="<本目录绝对路径>"
 
 装好后：侧边栏出现「Bot 群」图标，新建会话的模式里出现「Bot 模式」，输入框上方出现快捷条，设置里出现「Bot 群」与「模型服务商」两个分区。
 
-改了宿主代码（`lib/index.js`、`lib/store.js`、`lib/tools.js`、`lib/providers.js`）后不会热更新，需要在插件管理器里重启这一行：
+改了宿主代码（`lib/index.js`、`lib/service.js`、`lib/runtime.js`、`lib/store.js`、`lib/tools.js`、`lib/providers.js`）后不会热更新，需要在插件管理器里重启这一行：
 
 ```
-plugin_manager action=set_plugin target="include:dsh-bot-groups" enabled=false
-plugin_manager action=set_plugin target="include:dsh-bot-groups" enabled=true
+plugin_manager action=set_plugin target="include:dsh-grok-bot" enabled=false
+plugin_manager action=set_plugin target="include:dsh-grok-bot" enabled=true
 ```
 
 只改 `lib/client.js` 时不用重启宿主，客户端 HMR 会重新发布 bundle 并重挂插槽。
@@ -130,7 +142,7 @@ POST   /_dsh-bot-groups/groups/:id/budget
 POST   /_dsh-bot-groups/groups/:id/model
 ```
 
-## 配置（cordis.patch.yml 的 `dsh-bot-groups` 行）
+## 配置（cordis.patch.yml 的 `dsh-grok-bot` 行）
 
 | 键 | 默认 | 说明 |
 | --- | --- | --- |
@@ -150,7 +162,8 @@ POST   /_dsh-bot-groups/groups/:id/model
 
 - 群消息里的 @ 按「名字或 bot_xxx ID」精确匹配，不支持模糊匹配。
 - 一轮接力有硬上限（`maxRounds` 与 `maxBotsPerRound` 取小），防止 Bot 之间无限对聊烧预算。一条人类消息最多触发 `maxBotsPerRound` 次真实模型运行，按需调小。
-- 当前不监听 Host 推送，面板用轮询（运行中 2s，空闲 9s）。
+- 当前不监听 Host 推送，面板用轮询（运行中 2s，空闲 15s；后台标签页暂停）。
+- 写操作需要 `x-dsh-grok-bot: 1` 头；面板已自动带上，外部脚本调用时记得加。
 - 本插件会自己构造一份 `BotService` + `RoutineRunner`（复用 dsh-bot 的 `~/.dsh/bot` 数据与模型），与 dsh-bot 自带的实例各自持锁；群内发言按群串行，不会和别群并发。
 - 第三方通道的 token 用量按服务商返回的 usage 归一化；不同服务商字段差异较大，个别情况可能缺省为 0。
 

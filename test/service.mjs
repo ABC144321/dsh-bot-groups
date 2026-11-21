@@ -173,7 +173,7 @@ function call(method, path, body) {
     const req = {
       method,
       url: path,
-      headers: { host: '127.0.0.1:52699', origin: 'http://127.0.0.1:52699', 'content-type': 'application/json' },
+      headers: { host: '127.0.0.1:52699', origin: 'http://127.0.0.1:52699', 'content-type': 'application/json', 'x-dsh-grok-bot': '1' },
       on(event, fn) {
         if (event === 'data' && body !== undefined) fn(Buffer.from(JSON.stringify(body)))
         if (event === 'end') fn()
@@ -231,7 +231,7 @@ await check('非法 JSON body → 400', async () => {
     const req = {
       method: 'POST',
       url: `/_dsh-bot-groups/groups/${groupId}/messages`,
-      headers: { host: '127.0.0.1:52699', origin: 'http://127.0.0.1:52699' },
+      headers: { host: '127.0.0.1:52699', origin: 'http://127.0.0.1:52699', 'x-dsh-grok-bot': '1' },
       on(event, fn) {
         if (event === 'data') fn(Buffer.from('{oops'))
         if (event === 'end') fn()
@@ -272,6 +272,42 @@ await check('非本机 Origin → 403', async () => {
     routes[0].handler(req, res)
   })
   return res.status === 403 && res.json.code === 'FORBIDDEN'
+})
+
+await check('写操作缺少 CSRF 头 → 403', async () => {
+  const res = await new Promise((resolve) => {
+    const req = {
+      method: 'POST',
+      url: `/_dsh-bot-groups/groups/${groupId}/messages`,
+      headers: { host: '127.0.0.1:52699', origin: 'http://127.0.0.1:52699' },
+      on(event, fn) {
+        if (event === 'data') fn(Buffer.from('{"text":"x"}'))
+        if (event === 'end') fn()
+        return req
+      },
+      destroy() {},
+    }
+    const res = {
+      statusCode: 0,
+      headers: {},
+      writeHead(s) { this.statusCode = s; return this },
+      setHeader() {},
+      end(chunk) { resolve({ status: this.statusCode, json: chunk ? JSON.parse(String(chunk)) : null }) },
+      getHeader() {},
+    }
+    routes[0].handler(req, res)
+  })
+  return res.status === 403 && res.json.code === 'FORBIDDEN'
+})
+
+await check('月预算累计', async () => {
+  await service.store.mutate(groupId, (group) => {
+    group.budget = { dailyCny: 100, monthlyCny: 1 }
+    return group
+  })
+  await service.store.recordSpend(groupId, 0.25)
+  const group = await service.store.get(groupId)
+  return Math.abs(group.budget.spentMonth - 0.25) < 1e-9 && group.budget.monthlyCny === 1
 })
 
 await check('GET /diag', async () => {

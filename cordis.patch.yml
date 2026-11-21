@@ -1,10 +1,10 @@
-# dsh-bot-groups：Bot 群 +「Bot 模式」
+# dsh-grok-bot：Bot 群 +「Bot 模式」
 #
 # 1. 宿主插件：群数据、群聊 API、群聊工具（bot_group_*）。
 # 2. 模式预设：在「模式」里新增 Bot 模式 —— 一位常驻、可以拉群协作的 Bot 助手。
 - insert:
-    - id: dsh-bot-groups
-      name: dsh-bot-groups
+    - id: dsh-grok-bot
+      name: dsh-grok-bot
       config:
         homeDir: ~/.dsh/bot
         replyDryRun: false

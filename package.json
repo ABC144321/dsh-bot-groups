@@ -1,8 +1,8 @@
 {
-  "name": "dsh-bot-groups",
-  "version": "0.1.2",
+  "name": "dsh-grok-bot",
+  "version": "0.2.0",
   "private": true,
-  "description": "Bot 群：给 DSH Bot 加一个像 Grok Bot 的群聊层 —— 拉群、私聊、@交接、圆桌讨论、群目标 / 备忘录 / 预算 / 任务看板、停止重试与 Markdown 导出，并把「Bot 模式」加进模式选择器；内置第三方模型 API（主流服务商 / 魔搭社区 ModelScope / 自定义 OpenAI 兼容端点）",
+  "description": "Grok Bot 超级优化版：给 DSH Bot 加一个像 Grok Bot 的群聊层 —— 拉群、私聊、@交接、圆桌讨论、群目标 / 备忘录 / 日与月预算熔断 / 任务看板、停止重试与 Markdown 导出，并把「Bot 模式」加进模式选择器；内置第三方模型 API（主流服务商 / 魔搭社区 ModelScope / 自定义 OpenAI 兼容端点）",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -25,7 +25,7 @@
   "scripts": {
     "test": "node test/store.mjs && node test/service.mjs && node test/client.mjs && node test/providers.mjs",
     "test:preset": "node test/preset-plugins.mjs && node test/preset-config.mjs",
-    "check": "node --check lib/store.js && node --check lib/providers.js && node --check lib/tools.js && node --check lib/index.js && node --check lib/client.js"
+    "check": "node --check lib/config.js && node --check lib/errors.js && node --check lib/http.js && node --check lib/store.js && node --check lib/providers.js && node --check lib/runtime.js && node --check lib/service.js && node --check lib/routes.js && node --check lib/tools.js && node --check lib/index.js && node --check lib/client.js"
   },
   "engines": {
     "node": ">=22",

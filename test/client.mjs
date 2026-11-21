@@ -114,8 +114,8 @@ new Function('window', 'document', 'console', 'setInterval', 'clearInterval', so
 
 await check('bundle 调用了一次 __ModuleLoader__.load', () => loaderCalls.length === 1)
 const def = loaderCalls[0] || {}
-await check('模块 id 是 dsh-bot-groups', () => {
-  if (def.id !== 'dsh-bot-groups') throw new Error(`id=${def.id}`)
+await check('模块 id 是 dsh-grok-bot', () => {
+  if (def.id !== 'dsh-grok-bot') throw new Error(`id=${def.id}`)
   return true
 })
 
@@ -125,7 +125,7 @@ const mod = def.factory((name) => {
   throw error
 })
 
-await check('模块名 / inject', () => mod.name === 'dsh-bot-groups-client' && mod.inject.includes('slots') && mod.inject.includes('layout'))
+await check('模块名 / inject', () => mod.name === 'dsh-grok-bot-client' && mod.inject.includes('slots') && mod.inject.includes('layout'))
 
 /* ------------------------------- 渲染器 -------------------------------- */
 function render(node, out = []) {
@@ -307,6 +307,13 @@ await check('api() 解包 { ok, value }', async () => {
   const value = await C.api('/overview')
   if (!value || !Array.isArray(value.groups)) throw new Error(JSON.stringify(value))
   if (fetchCalls[0].url !== '/_dsh-bot-groups/overview') throw new Error(fetchCalls[0].url)
+  return true
+})
+await check('api() 写操作带 CSRF 头', async () => {
+  const before = fetchCalls.length
+  await C.api('/groups', { method: 'POST', body: { name: 'x' } })
+  const init = fetchCalls[before].init
+  if (!init.headers || init.headers['x-dsh-grok-bot'] !== '1') throw new Error(JSON.stringify(init.headers))
   return true
 })
 await check('api() 把 ok:false 变成带 code 的异常', async () => {

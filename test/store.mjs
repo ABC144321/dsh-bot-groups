@@ -176,7 +176,7 @@ await check('remove', async () => {
 })
 
 await check('index.js 导出 apply/name/inject', () => {
-  return typeof host.default.apply === 'function' && host.default.name === 'dsh-bot-groups' && Array.isArray(host.default.inject)
+  return typeof host.default.apply === 'function' && host.default.name === 'dsh-grok-bot' && Array.isArray(host.default.inject)
 })
 
 await check('tools.js 导出注册函数', () => typeof toolsMod.registerBotGroupTools === 'function')
