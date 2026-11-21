@@ -128,6 +128,37 @@ await check('GroupStore.list', async () => {
   return list.length === 1 && list[0].id === 'grp_test'
 })
 
+await check('群备忘录写入并注入 prompt', async () => {
+  await groups.mutate('grp_test', (group) => {
+    group.notes = '回答控制在 120 字内'
+    return group
+  })
+  const g = await groups.get('grp_test')
+  const text = store.buildGroupTaskPrompt(g, null, { botId: 'bot_alpha', name: 'Alpha' })
+  return g.notes === '回答控制在 120 字内' && text.includes('群备忘录') && text.includes('回答控制在 120 字内')
+})
+
+await check('消息附件与引用归一化', async () => {
+  const msg = store.normalizeMessage({
+    role: 'human',
+    text: '看这个',
+    replyTo: 'm_prev',
+    attachments: [{ name: 'a.txt', path: 'C:/tmp/a.txt', size: 12 }, { name: 'b.txt', path: 'C:/tmp/b.txt' }],
+  })
+  return msg.attachments.length === 2 && msg.attachments[0].size === 12 && msg.replyTo === 'm_prev' && msg.stopped === false
+})
+
+await check('预算花费按日累计', async () => {
+  await groups.mutate('grp_test', (group) => {
+    group.budget = { dailyCny: 2, monthlyCny: 10 }
+    return group
+  })
+  await groups.recordSpend('grp_test', 0.0032)
+  await groups.recordSpend('grp_test', 0.0018)
+  const g = await groups.get('grp_test')
+  return Math.abs(g.budget.spentDay - 0.005) < 1e-9 && g.budget.dailyCny === 2
+})
+
 await check('mutate 并发安全', async () => {
   await Promise.all([
     groups.appendMessage('grp_test', { role: 'human', text: '并发 1' }),
@@ -160,7 +191,7 @@ await check('工具注册（假 ctx）', () => {
     'bot_group_round', 'bot_group_speak', 'bot_group_invite', 'bot_group_remove_members',
     'bot_group_goal', 'bot_group_mode', 'bot_group_delete',
     'bot_group_stop', 'bot_group_retry', 'bot_group_task', 'bot_group_budget',
-    'bot_group_model', 'bot_providers',
+    'bot_group_model', 'bot_providers', 'bot_group_dm', 'bot_group_note',
   ]
   return expected.every((n) => names.includes(n)) && names.length === expected.length
 })

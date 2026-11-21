@@ -10,17 +10,19 @@ MIT License · 无运行时依赖（除了 `@zifeng1023/dsh-bot`）· 离线自�
 
 新建会话时，模式里会多一项「Bot 模式」：一位常驻 Bot 助手的人设 + 完整的文件 / 搜索 / 网页 / 子代理能力 + `bot_group_*` 群聊工具。它不把活全揽在自己身上，而是会按需要拉群、@ 成员、把球传出去。
 
-**2. Bot 群（侧边栏「Bot 群」面板）**
+**2. Bot 群 + 私聊（侧边栏「Bot 群」面板）**
 
-- 拉群：把多位已有 Bot 拉进一个群，可选主持人、每轮接力人数。
+- 拉群：把多位已有 Bot 拉进一个群，可选主持人、每轮接力人数；也支持一键套用「发布评审 / 功能开发 / 资料调研 / 内容撰写」模板。
+- 私聊：点「+ 私聊」选一位 Bot 就直接开聊；同一个 Bot 只会有一个私聊，重复发起会复用（`POST /dm` 幂等）。左栏把「私聊」与「群聊」分区展示。
 - 路由模式：智能 @ 路由 / 依次发言 / 全员圆桌 / 主持人主导。
 - @ 交接：Bot 回复里 `@成员名` 会自动触发下一位发言（有轮次上限，避免无限接力）。
 - 群目标：一句话目标会注入每次群发言的上下文，可标记进行中 / 暂停 / 已完成。
+- 群备忘录：人类维护的长期设定（「回答控制在 200 字内」「改代码前先跑测试」），每次发言都会注入，优先级高于普通消息。
 - 任务看板：群里可以维护待办 / 进行中 / 已完成的任务，Bot 发言时能看到未完成项。
 - 引用与附件：可以引用某条消息回复，也可以把本机文件挂到消息上（Bot 用文件工具读取）。
 - 停止与重试：一轮跑到一半可以「停止」，失败或被停下的发言可以「重试」。
-- 花费可见：每条 Bot 发言带本次花费，群头部统计累计花费、消息数与每日预算用量。
-- 私聊：`kind: dm` 就是和单个 Bot 的 1 对 1 会话。
+- 花费可见：每条 Bot 发言带本次花费；右栏有「本群用量」按 Bot 拆分的消息数与花费，以及累计花费、每日预算用量。
+- 搜索与导出：群头部可以搜消息（本地过滤，显示匹配数），也可以一键导出整段对话为 Markdown（含目标、备忘录、任务看板）。
 
 **3. 输入框快捷条**
 
@@ -92,7 +94,7 @@ plugin_manager action=set_plugin target="include:dsh-bot-groups" enabled=true
 
 ## 工具
 
-`bot_group_list`、`bot_group_create`、`bot_group_show`、`bot_group_chat`、`bot_group_round`、`bot_group_speak`、`bot_group_invite`、`bot_group_remove_members`、`bot_group_goal`、`bot_group_mode`、`bot_group_delete`、`bot_group_stop`、`bot_group_retry`、`bot_group_task`、`bot_group_budget`、`bot_group_model`、`bot_providers`。
+`bot_group_list`、`bot_group_create`、`bot_group_show`、`bot_group_chat`、`bot_group_round`、`bot_group_speak`、`bot_group_invite`、`bot_group_remove_members`、`bot_group_goal`、`bot_group_mode`、`bot_group_delete`、`bot_group_stop`、`bot_group_retry`、`bot_group_task`、`bot_group_budget`、`bot_group_model`、`bot_providers`、`bot_group_dm`、`bot_group_note`。
 
 ## HTTP API
 
@@ -110,7 +112,9 @@ GET    /_dsh-bot-groups/providers/:id/models
 POST   /_dsh-bot-groups/providers/:id/test
 POST   /_dsh-bot-groups/providers/:id/enable
 POST   /_dsh-bot-groups/groups
+POST   /_dsh-bot-groups/dm
 GET    /_dsh-bot-groups/groups/:id
+GET    /_dsh-bot-groups/groups/:id/export
 DELETE /_dsh-bot-groups/groups/:id
 POST   /_dsh-bot-groups/groups/:id/messages
 POST   /_dsh-bot-groups/groups/:id/rounds
@@ -156,7 +160,7 @@ POST   /_dsh-bot-groups/groups/:id/model
 
 ```powershell
 npm run check     # 语法检查
-npm test          # 数据层 23 项 + 服务与路由 22 项 + 客户端 bundle 19 项 + 服务商 26 项
+npm test          # 数据层 28 项 + 服务与路由 28 项 + 客户端 bundle 21 项 + 服务商 27 项
 ```
 
 需要真实 DSH 安装目录的两组（校验 Bot 模式引用的 26 个插件包与它们各自的 config）：
@@ -166,10 +170,11 @@ $env:DSH_INSTALL_DIR='<...>/resources/app.asar/dsh/node_modules/@deepseek-ai/dsh
 npm run test:preset
 ```
 
-线上（安装后）已验证：`GET /_dsh-bot-groups/overview` 返回 200、`/diag` 显示 `degraded: false`、17 个 `bot_group_*` / `bot_providers` 工具出现在会话工具表、客户端插槽 `conversation.input.dock` / `sidebar.panellist` / 两个 `settings.section` 中 `dsh-bot-groups-client` 均为 active、`include:preset-bot` 为 active、两个 Bot 的群聊实测完成「建群 → 点名 → 接力 → 回传」并落档计费。
+线上（安装后）已验证：`GET /_dsh-bot-groups/overview` 返回 200、`/diag` 显示 `degraded: false`、19 个 `bot_group_*` / `bot_providers` 工具出现在会话工具表、客户端插槽 `conversation.input.dock` / `sidebar.panellist` / 两个 `settings.section` 中 `dsh-bot-groups-client` 均为 active、`include:preset-bot` 为 active、两个 Bot 的群聊实测完成「建群 → 点名 → 接力 → 回传」并落档计费、`POST /dm` 建私聊后重复调用复用同一会话、第三方路由实测（绑魔搭后缺 Key 的失败分支）落档为 `failed` 且花费 0。
 
 ## 更新日志
 
+- **0.1.2**：私聊一等公民（`POST /dm` 幂等、左栏「私聊 / 群聊」分区、私聊头部与占位文案、输入框快捷条「+ 私聊」）；一键建群模板（发布评审 / 功能开发 / 资料调研 / 内容撰写）；群备忘录（注入每次发言）；群内消息搜索；导出 Markdown（含目标、备忘录、任务看板、花费）；右栏按 Bot 拆分的用量统计；2 个新工具 `bot_group_dm` / `bot_group_note` 与 2 个新端点 `POST /dm`、`GET /groups/:id/export`。
 - **0.1.1**：第三方模型 API（12 家预置 + 魔搭社区 + 自定义 OpenAI 兼容端点、`env:`/`file:` Key 引用、连通性测试、按 Bot / 按群切换）；停止与重试；群任务看板；每日/每月预算；引用回复与附件；6 个新工具与 13 个新端点。
 - **0.1.0**：Bot 模式、Bot 群（拉群 / 路由模式 / @ 交接 / 群目标 / 私聊）、输入框快捷条、侧边栏与设置分区。
 

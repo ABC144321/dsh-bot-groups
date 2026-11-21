@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 const host = await import(new URL('../lib/index.js', import.meta.url).href)
+const store = await import(new URL('../lib/store.js', import.meta.url).href)
 
 const failures = []
 async function check(label, fn) {
@@ -77,7 +78,7 @@ const fakeRunner = {
 }
 
 await check('apply() 注册前缀路由', () => routes.length === 1 && routes[0].kind === 'prefix' && routes[0].path === '/_dsh-bot-groups')
-await check('apply() 注册 17 个工具', () => toolNames.length === 17)
+await check('apply() 注册 19 个工具', () => toolNames.length === 19)
 await check('ctx.set("botGroups") 生效', () => service && typeof service.create === 'function')
 
 // 注入假 Bot 身份与运行时
@@ -282,6 +283,48 @@ await check('DELETE /groups/:id', async () => {
   const res = await call('DELETE', `/_dsh-bot-groups/groups/${groupId}`)
   const after = await call('GET', `/_dsh-bot-groups/groups/${groupId}`)
   return res.status === 200 && after.status === 404
+})
+
+await check('ensureDm() 建私聊并复用', async () => {
+  const first = await service.ensureDm('bot_alpha')
+  const second = await service.ensureDm('bot_alpha')
+  return first.created === true && first.group.kind === 'dm' && first.group.members.length === 1 &&
+    second.created === false && second.group.id === first.group.id
+})
+
+await check('POST /dm 幂等', async () => {
+  const res = await call('POST', '/_dsh-bot-groups/dm', { botId: 'bot_alpha' })
+  const again = await call('POST', '/_dsh-bot-groups/dm', { botId: 'Alpha' })
+  return res.status === 200 && res.json.value.created === false && again.json.value.group.id === res.json.value.group.id
+})
+
+await check('POST /dm 未知 Bot → 404', async () => {
+  const res = await call('POST', '/_dsh-bot-groups/dm', { botId: 'bot_nope' })
+  return res.status === 404 && res.json.code === 'BOT_NOT_FOUND'
+})
+
+await check('群备忘录写入并注入 prompt', async () => {
+  const dm = await service.ensureDm('bot_alpha')
+  const updated = await service.update(dm.group.id, { notes: '回答控制在 100 字内' })
+  const prompt = store.buildGroupTaskPrompt(
+    { ...updated, messages: [] },
+    { role: 'human', text: '你好', id: 'm1' },
+    { botId: 'bot_alpha', name: 'Alpha' },
+  )
+  return updated.notes === '回答控制在 100 字内' && prompt.includes('群备忘录') && prompt.includes('回答控制在 100 字内')
+})
+
+await check('GET /groups/:id/export 返回 Markdown', async () => {
+  const dm = await service.ensureDm('bot_alpha')
+  await service.postHuman(dm.group.id, '导出测试的一句话', { reply: false })
+  const res = await call('GET', `/_dsh-bot-groups/groups/${dm.group.id}/export`)
+  const md = res.json.value.markdown
+  return res.status === 200 && res.json.value.filename.endsWith('.md') && md.includes('# ') && md.includes('导出测试的一句话') && md.includes('备忘录')
+})
+
+await check('summarize 带 byBot 用量', async () => {
+  const detail = await service.detail((await service.ensureDm('bot_alpha')).group.id)
+  return Array.isArray(detail.byBot) && typeof detail.notes === 'string'
 })
 
 rmSync(home, { recursive: true, force: true })

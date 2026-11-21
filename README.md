@@ -8,17 +8,19 @@ MIT License · no runtime dependencies beyond `@zifeng1023/dsh-bot` · 90 offlin
 
 **1. Bot mode** — a new card in the new-session mode picker: a resident-Bot persona with the full file / search / web / subagent toolset plus `bot_group_*` group tools. It delegates through groups instead of doing everything alone.
 
-**2. Bot Groups panel** (sidebar)
+**2. Bot Groups + DMs** (sidebar)
 
-- Create a group from existing bots; pick a lead and a per-round hand-off cap.
+- Create a group from existing bots; pick a lead and a per-round hand-off cap. One-click templates (release review / feature work / research / writing) prefill members and goal.
+- DMs are first-class: **+ 私聊** opens a 1:1 chat with any bot. One DM per bot — starting it again reuses the existing thread (`POST /dm` is idempotent). The sidebar splits **DMs** and **groups**.
 - Routing modes: smart @ routing / round-robin / panel / moderated.
 - @ hand-off: a bot reply containing `@memberName` queues that member next (bounded).
 - Shared group goal, injected into every group turn; active / paused / done.
+- Group memo: long-lived human instructions ("keep answers under 200 chars", "run the tests before touching code") injected into every turn with high priority.
 - Task board: todo / doing / done items are shown to bots on every turn.
 - Quotes and attachments: reply to a specific message, attach local files for the bot to read.
 - Stop and retry: abort a running round, or retry a failed / stopped turn.
-- Per-message cost plus group totals and a daily budget meter.
-- DMs: `kind: dm` is a 1:1 conversation with a single bot.
+- Per-message cost, a per-bot usage breakdown in the side panel, group totals and a daily budget meter.
+- In-group message search and one-click Markdown export (goal, memo, task board, transcript, costs).
 
 **3. Composer quick bar** — a slim Bot Groups strip under the input box showing unread and running groups.
 
@@ -86,7 +88,7 @@ plugin_manager action=set_plugin target="include:dsh-bot-groups" enabled=true
 
 ## Tools
 
-`bot_group_list`, `bot_group_create`, `bot_group_show`, `bot_group_chat`, `bot_group_round`, `bot_group_speak`, `bot_group_invite`, `bot_group_remove_members`, `bot_group_goal`, `bot_group_mode`, `bot_group_delete`, `bot_group_stop`, `bot_group_retry`, `bot_group_task`, `bot_group_budget`, `bot_group_model`, `bot_providers`.
+`bot_group_list`, `bot_group_create`, `bot_group_show`, `bot_group_chat`, `bot_group_round`, `bot_group_speak`, `bot_group_invite`, `bot_group_remove_members`, `bot_group_goal`, `bot_group_mode`, `bot_group_delete`, `bot_group_stop`, `bot_group_retry`, `bot_group_task`, `bot_group_budget`, `bot_group_model`, `bot_group_dm`, `bot_group_note`, `bot_providers`.
 
 ## HTTP API
 
@@ -104,7 +106,9 @@ GET    /_dsh-bot-groups/providers/:id/models
 POST   /_dsh-bot-groups/providers/:id/test
 POST   /_dsh-bot-groups/providers/:id/enable
 POST   /_dsh-bot-groups/groups
+POST   /_dsh-bot-groups/dm
 GET    /_dsh-bot-groups/groups/:id
+GET    /_dsh-bot-groups/groups/:id/export
 DELETE /_dsh-bot-groups/groups/:id
 POST   /_dsh-bot-groups/groups/:id/messages
 POST   /_dsh-bot-groups/groups/:id/rounds
@@ -160,10 +164,11 @@ $env:DSH_INSTALL_DIR='<...>/resources/app.asar/dsh/node_modules/@deepseek-ai/dsh
 npm run test:preset
 ```
 
-Live-verified after install: `/overview` → 200, `/diag` → `degraded: false`, 17 group/provider tools in the session tool table, `dsh-bot-groups-client` active in `conversation.input.dock`, `sidebar.panellist` and both `settings.section` slots, `include:preset-bot` active, and a real two-bot group run (create → mention → hand-off → reply) persisted with cost.
+Live-verified after install: `/overview` → 200, `/diag` → `degraded: false`, 19 group/provider tools in the session tool table, `dsh-bot-groups-client` active in `conversation.input.dock`, `sidebar.panellist` and both `settings.section` slots, `include:preset-bot` active, and a real two-bot group run (create → mention → hand-off → reply) persisted with cost.
 
 ## Changelog
 
+- **0.1.2** — DMs as a first-class feature (`POST /dm` idempotent, DM/group split in the sidebar, DM header and composer, quick-bar DM button); one-click group templates; group memo injected into every turn; in-group message search; Markdown export (goal, memo, tasks, transcript, costs); per-bot usage breakdown; 2 new tools (`bot_group_dm`, `bot_group_note`) and 2 new endpoints (`POST /dm`, `GET /groups/:id/export`).
 - **0.1.1** — third-party model APIs (12 presets incl. ModelScope, custom OpenAI-compatible endpoints, `env:`/`file:` keys, connectivity tests, per-bot and per-group switching); stop/retry; group task board; daily/monthly budgets; quotes and attachments; 6 new tools and 13 new endpoints.
 - **0.1.0** — Bot mode, Bot Groups (create / routing / @ hand-off / goal / DM), composer quick bar, sidebar and settings sections.
 

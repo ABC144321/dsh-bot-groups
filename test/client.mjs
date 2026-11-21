@@ -241,8 +241,18 @@ await check('ProvidersCard 渲染出服务商标题与自定义入口', () => {
 })
 await check('Shell 在无数据时渲染空状态', () => {
   const text = textOf(createElement(C.Shell, { ctx: fakeCtx }))
-  if (!text.includes('还没有群')) throw new Error(text)
+  if (!text.includes('还没有会话')) throw new Error(text)
   if (!text.includes('选一个群')) throw new Error(text)
+  if (!text.includes('+ 私聊')) throw new Error(text)
+  return true
+})
+await check('CreateGroupDialog 私聊模式不与群模板混用', () => {
+  const bots = [{ id: 'bot_a', name: '阿尔法', role: '研究员' }]
+  const dmText = textOf(createElement(C.CreateGroupDialog, { bots, initialKind: 'dm', onClose() {}, onCreated() {} }))
+  if (!dmText.includes('和 Bot 私聊')) throw new Error(dmText)
+  if (!dmText.includes('私聊名')) throw new Error(dmText)
+  const groupText = textOf(createElement(C.CreateGroupDialog, { bots, onClose() {}, onCreated() {} }))
+  if (!groupText.includes('发布评审') || !groupText.includes('功能开发')) throw new Error(groupText)
   return true
 })
 await check('MessageRow 渲染系统消息', () => {
