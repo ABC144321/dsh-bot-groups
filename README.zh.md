@@ -77,7 +77,7 @@ Grok Bot 的 Bot 可以换脑子，这里也可以：给任意 Bot、或整个�
 
 ```powershell
 # 方式一：从本仓库克隆后安装（安装会执行代码，需要完整权限）
-git clone https://github.com/ABC144321/dsh-bot-groups.git
+git clone https://github.com/ABC144321/dsh-grok-bot.git
 plugin_manager action=install_bundle target="<克隆下来的目录绝对路径>"
 
 # 方式二：已下载到本地某个目录，直接指向它

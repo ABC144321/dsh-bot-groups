@@ -52,11 +52,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ABC144321/dsh-bot-groups.git"
+    "url": "git+https://github.com/ABC144321/dsh-grok-bot.git"
   },
-  "homepage": "https://github.com/ABC144321/dsh-bot-groups#readme",
+  "homepage": "https://github.com/ABC144321/dsh-grok-bot#readme",
   "bugs": {
-    "url": "https://github.com/ABC144321/dsh-bot-groups/issues"
+    "url": "https://github.com/ABC144321/dsh-grok-bot/issues"
   },
   "license": "MIT"
 }

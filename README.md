@@ -71,7 +71,7 @@ Or add **any OpenAI-compatible endpoint** with *+ Custom provider* (self-hosted 
 
 ```powershell
 # from this repo (installing a bundle executes code, so it needs full access)
-git clone https://github.com/ABC144321/dsh-bot-groups.git
+git clone https://github.com/ABC144321/dsh-grok-bot.git
 plugin_manager action=install_bundle target="<absolute path to the clone>"
 
 # or point at an existing checkout
