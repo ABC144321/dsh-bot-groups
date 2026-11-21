@@ -1,0 +1,123 @@
+# dsh-bot-groups：Bot 群 +「Bot 模式」
+#
+# 1. 宿主插件：群数据、群聊 API、群聊工具（bot_group_*）。
+# 2. 模式预设：在「模式」里新增 Bot 模式 —— 一位常驻、可以拉群协作的 Bot 助手。
+- insert:
+    - id: dsh-bot-groups
+      name: dsh-bot-groups
+      config:
+        homeDir: ~/.dsh/bot
+        replyDryRun: false
+        handoffEnabled: true
+        maxBotsPerRound: 6
+        runTimeoutMs: 240000
+        snapshotEnabled: false
+    - id: preset-bot
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: bot
+        name: Bot 模式
+        description: 像 Grok Bot 一样工作：一位常驻 Bot 助手，用 bot_group_* 把多个 Bot 拉进群、按 @ 接力、维护群目标，并保留完整的文件 / 搜索 / 子代理能力。
+        order: 2
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: |
+                You are a resident Bot in DeepSeek Harness, powered by the {{model}} model.
+                You live in a Bot group and act like a Grok Bot teammate: you keep your own goal, you can pull other Bots into a group, and you hand work off with @mentions instead of doing everything alone.
+                Prefer bot_group_* tools for group work: bot_group_list, bot_group_create, bot_group_chat, bot_group_round, bot_group_invite, bot_group_goal, bot_group_mode.
+                When a task clearly needs several specialists, create a group (or invite members), state the group goal, then let members speak in turn.
+                Speak in short, concrete messages. Do not narrate tool plumbing to the group.
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+            config:
+              applyPatch: false
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          - id: tool-schedule
+            name: '@deepseek-ai/dsh-tool-schedule'
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+          - id: command-goal
+            name: '@deepseek-ai/dsh-command-goal'
+          - id: tool-goal
+            name: '@deepseek-ai/dsh-tool-goal'
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          - id: delegation
+            name: cordis:group
+            group: true
+            isolate:
+              workflowEngine: true
+            config:
+              - id: tool-subagent-control
+                name: '@deepseek-ai/dsh-tool-subagent-control'
+                config:
+                  interrupt: false
+              - id: tool-subagent
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: spawn
+                  toolName: subagent
+                  modelSelection: true
+                  modelDiscovery: true
+              - id: tool-subagent-fork
+                name: '@deepseek-ai/dsh-tool-subagent'
+                config:
+                  provider: fork
+                  toolName: subagent_fork
+              - id: workflow-ptc
+                name: '@deepseek-ai/dsh-workflow-ptc'
+                config:
+                  provider: spawn
+              - id: tool-workflow
+                name: '@deepseek-ai/dsh-tool-workflow'
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: tool-web
+            name: '@deepseek-ai/dsh-tool-web'
+            config:
+              fetch: true
+              searchTimeoutMs: 60000
+          - id: present
+            name: '@deepseek-ai/dsh-tool-present'
+          - id: tool-office
+            name: '@deepseek-ai/dsh-tool-office'

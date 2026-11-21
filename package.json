@@ -1,0 +1,54 @@
+{
+  "name": "dsh-bot-groups",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bot 群：给 DSH Bot 加一个像 Grok Bot 的群聊层 —— 拉群、群聊、@交接、圆桌讨论、群目标与预算，并把「Bot 模式」加进模式选择器",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./tools": "./lib/tools.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "icon": "./icon.svg",
+  "files": [
+    "lib/",
+    "locale/",
+    "cordis.patch.yml",
+    "icon.svg",
+    "README.md",
+    "README.zh.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node test/store.mjs && node test/service.mjs && node test/client.mjs",
+    "test:preset": "node test/preset-plugins.mjs && node test/preset-config.mjs",
+    "check": "node --check lib/store.js && node --check lib/tools.js && node --check lib/index.js && node --check lib/client.js"
+  },
+  "engines": {
+    "node": ">=22",
+    "dsh": ">=0.2.1-rc.5 <0.3.0-0"
+  },
+  "dsh": {
+    "manifestVersion": 1,
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [],
+      "platform": "web"
+    }
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "dsh-plugin",
+    "bot",
+    "grok-bot",
+    "group-chat",
+    "multi-agent"
+  ],
+  "license": "MIT"
+}

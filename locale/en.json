@@ -1,0 +1,9 @@
+{
+  "meta": {
+    "title": "Bot Groups",
+    "description": "A group-chat layer for DSH Bots: pull bots into a group, hand off with @mentions, run round-tables, keep a shared goal, plus a Bot mode in the mode picker."
+  },
+  "panel": {
+    "title": "Bot Groups"
+  }
+}

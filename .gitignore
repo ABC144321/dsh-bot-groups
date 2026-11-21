@@ -1,0 +1,17 @@
+# 依赖
+node_modules/
+.pnpm-store/
+
+# 运行产物
+*.log
+logs/
+coverage/
+tmp/
+.dsh-bot/
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

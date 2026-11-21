@@ -1,0 +1,9 @@
+{
+  "meta": {
+    "title": "Bot 群",
+    "description": "给 DSH Bot 加一个群聊层：拉群、@ 接力、圆桌讨论、群目标，并在模式里加入 Bot 模式。"
+  },
+  "panel": {
+    "title": "Bot 群"
+  }
+}

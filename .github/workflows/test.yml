@@ -1,0 +1,34 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  offline-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: 语法检查
+        run: npm run check
+      - name: 离线自测（数据层 / 服务与路由 / 客户端 bundle）
+        run: npm test
+
+  preset-tests:
+    # Bot 模式的插件清单只能对着真实的 DSH 安装来验，装不到就跳过，
+    # 所以这一步只在手动触发时跑。
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Bot 模式依赖与配置自测
+        env:
+          DSH_INSTALL_DIR: ${{ secrets.DSH_INSTALL_DIR }}
+        run: npm run test:preset
