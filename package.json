@@ -1,6 +1,6 @@
 {
   "name": "dsh-grok-bot",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "Grok Bot 超级优化版：给 DSH Bot 加一个像 Grok Bot 的群聊层 —— 拉群、私聊、@交接、圆桌讨论、群目标 / 备忘录 / 日与月预算熔断 / 任务看板、停止重试与 Markdown 导出，并把「Bot 模式」加进模式选择器；内置第三方模型 API（主流服务商 / 魔搭社区 ModelScope / 自定义 OpenAI 兼容端点）",
   "type": "module",
